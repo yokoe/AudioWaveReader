@@ -1,12 +1,10 @@
 import XCTest
-@testable import AudioWaveReader
+import AVFoundation
+import AudioWaveReader
 
 final class AudioWaveReaderTests: XCTestCase {
     func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct
-        // results.
-        XCTAssertEqual(AudioWaveReader().text, "Hello, World!")
+        XCTAssertNotNil(AudioWaveReader(asset: AVAsset(url: URL(fileURLWithPath: "example.mov"))))
     }
 
     static var allTests = [
