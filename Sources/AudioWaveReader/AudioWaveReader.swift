@@ -15,8 +15,9 @@ public class AudioWaveReader {
     }
     
     public func readAsynchronously(
-        completion: @escaping ((Result) -> ()),
-        progress: ((Progress) -> ())? = nil) {
+        progress: ((Progress) -> ())? = nil,
+        completion: @escaping ((Result) -> ())
+    ) {
         DispatchQueue.global().async {
             completion(self.read(progress: progress))
         }
