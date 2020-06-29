@@ -14,13 +14,15 @@ public class AudioWaveReader {
         self.samplingRate = samplingRate
     }
     
-    public func readAsynchronously(completionHandler: @escaping ((Result) -> ())) {
+    public func readAsynchronously(
+        completion: @escaping ((Result) -> ()),
+        progress: ((Progress) -> ())? = nil) {
         DispatchQueue.global().async {
-            completionHandler(self.read())
+            completion(self.read(progress: progress))
         }
     }
     
-    private func read() -> Result {
+    private func read(progress: ((Progress) -> ())? = nil) -> Result {
         let audioTracks = asset.tracks(withMediaType: .audio)
         if audioTracks.isEmpty {
             return .failure(error: NSError(domain: "AudioWaveReader", code: 1, userInfo: [NSLocalizedDescriptionKey: "No audio tracks"]))
@@ -44,6 +46,8 @@ public class AudioWaveReader {
             reader.startReading()
             var waveData = [Int16]()
             
+            var readDuration: TimeInterval = 0
+            let readProgress = Progress(totalUnitCount: Int64(reader.asset.duration.seconds * 100))
             while reader.status == .reading {
                 if let buffer = trackOutput.copyNextSampleBuffer() {
                     guard let dataBuffer = buffer.dataBuffer else {
@@ -55,6 +59,10 @@ public class AudioWaveReader {
                     waveData.append(contentsOf: data.withUnsafeBytes {
                         Array($0.bindMemory(to: Int16.self)).map(Int16.init(littleEndian:))
                     })
+                    readDuration += buffer.duration.seconds
+                    readProgress.completedUnitCount = Int64(readDuration * 100)
+                    
+                    progress?(readProgress)
                 }
             }
             
