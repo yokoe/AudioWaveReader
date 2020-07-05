@@ -1,6 +1,9 @@
 import AVFoundation
 
 public class AudioWaveReader {
+    public enum ReadError: Error {
+        case noAudioTracks
+    }
     public enum Result {
         case success(data: [Int16])
         case failure(error: Error)
@@ -26,7 +29,7 @@ public class AudioWaveReader {
     private func read(progress: ((Progress) -> ())? = nil) -> Result {
         let audioTracks = asset.tracks(withMediaType: .audio)
         if audioTracks.isEmpty {
-            return .failure(error: NSError(domain: "AudioWaveReader", code: 1, userInfo: [NSLocalizedDescriptionKey: "No audio tracks"]))
+            return .failure(error: ReadError.noAudioTracks)
         }
         if audioTracks.count != 1 {
             debugPrint(String(format: "Warning: %d audio tracks found", audioTracks.count))
