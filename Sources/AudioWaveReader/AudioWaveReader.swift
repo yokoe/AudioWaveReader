@@ -71,6 +71,9 @@ public class AudioWaveReader {
             }
             
             if reader.status == .failed || reader.status == .unknown {
+                if let error = reader.error {
+                    return .failure(error: error)
+                }
                 return .failure(error: NSError(domain: "AudioWaveReader", code: 2, userInfo: [NSLocalizedDescriptionKey: "something went wrong"]))
             }
             
