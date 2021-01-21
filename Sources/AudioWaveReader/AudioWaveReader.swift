@@ -3,6 +3,7 @@ import AVFoundation
 public class AudioWaveReader {
     public enum ReadError: Error {
         case noAudioTracks
+        case operationCancelled
     }
     public enum Result {
         case success(data: [Int16])
@@ -11,6 +12,7 @@ public class AudioWaveReader {
     
     private let asset: AVAsset
     private let samplingRate: Int
+    private var cancelRequested: Bool = false
     
     public init(asset: AVAsset, samplingRate: Int = 48000) {
         self.asset = asset
@@ -52,7 +54,7 @@ public class AudioWaveReader {
             
             var readDuration: TimeInterval = 0
             let readProgress = Progress(totalUnitCount: Int64(reader.asset.duration.seconds * 100))
-            while reader.status == .reading {
+            while reader.status == .reading && !cancelRequested {
                 if let buffer = trackOutput.copyNextSampleBuffer() {
                     guard let dataBuffer = buffer.dataBuffer else {
                         debugPrint("No data buffer")
@@ -69,6 +71,10 @@ public class AudioWaveReader {
                     progress?(readProgress)
                 }
             }
+
+            if cancelRequested {
+                return .failure(error: ReadError.operationCancelled)
+            }
             
             if reader.status == .failed || reader.status == .unknown {
                 if let error = reader.error {
@@ -82,6 +88,10 @@ public class AudioWaveReader {
         } catch let error {
             return .failure(error: error)
         }
+    }
+
+    public func cancel() {
+        cancelRequested = true
     }
 }
 
